@@ -6,6 +6,93 @@
     <title>User Registration</title>
     <link rel="stylesheet" href="style.css">
 </head>
+<style>
+    /* Reset some default styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #c6f9ff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    width: 90%;
+    max-width: 400px;
+}
+
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    color: #555;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    background-color: white;
+    border: 1px solid #ccc;
+    color: black;
+    border-radius: 5px;
+    font-size: 16px;
+    margin-bottom: 15px; /* Space between inputs */
+}
+
+
+
+button.two {
+    width: 100%;
+    padding: 10px;
+    background-color: #007BFF; /* Blue background */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button.two:hover {
+    background-color: #00a305; 
+}
+
+#message {
+    text-align: center;
+    margin-top: 10px;
+    color: #333; 
+}
+
+@media (max-width: 600px) {
+    .container {
+        padding: 15px;
+    }
+
+    h2 {
+        font-size: 24px;
+    }
+
+    button.two {
+        font-size: 14px;
+    }
+}
+</style>
 <body>
     <div class="container">
         <h2>Register</h2>
@@ -19,7 +106,7 @@
             <label for="password">Password:</label>
             <input type="password" id="password" name="password" required>
 
-            <button type="submit">Register</button>
+            <button class="two" type="submit">Register</button>
         </form>
         <p id="message"></p>
     </div>
