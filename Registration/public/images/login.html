@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Login</h2>
+        <form id="loginForm">
+            <div class="input-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+
+            <div class="input-group">
+                <label for="password">Password:</label>
+                <div class="password-container">
+                    <input type="password" id="password" name="password" required>
+                    <button type="button" id="togglePassword">👁</button>
+                </div>
+            </div>
+
+            <button type="submit" id="loginBtn">Login</button>
+
+            <p class="forgot-password">
+                <a href="#" id="forgotPassword">Forgot Password?</a>
+            </p>
+            <p class="register">
+                Don't have an account? <a href="register.html">Sign up</a>
+            </p>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById("loginForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            try {
+                const response = await fetch("http://localhost:5000/api/user/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    alert(data.msg || "Invalid credentials. Please try again.");
+                } else {
+                    localStorage.setItem("token", data.token); // Store token
+                    alert("Login successful! Redirecting to home...");
+                    window.location.href = "home.html"; // Redirect to home
+                }
+            } catch (error) {
+                console.error("Login Error:", error);
+                alert("An error occurred while logging in.");
+            }
+        });
+
+        // Handle Forgot Password
+        document.getElementById("forgotPassword").addEventListener("click", async function() {
+            const email = prompt("Enter your registered email for password reset:");
+            if (!email) return;
+
+            try {
+                const response = await fetch("http://localhost:5000/api/user/forget-password", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    alert(data.msg || "Failed to send reset email.");
+                } else {
+                    alert("Password reset email sent successfully!");
+                }
+            } catch (error) {
+                console.error("Forgot Password Error:", error);
+                alert("An error occurred while sending the reset email.");
+            }
+        });
+
+        // Toggle Password Visibility
+        document.getElementById("togglePassword").addEventListener("click", function() {
+            const passwordInput = document.getElementById("password");
+            if (passwordInput.type === "password") {
+                passwordInput.type = "text";
+                this.textContent = "🔒";
+            } else {
+                passwordInput.type = "password";
+                this.textContent = "👁";
+            }
+        });
+    </script>
+</body>
+</html>
