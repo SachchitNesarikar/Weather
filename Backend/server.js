@@ -10,7 +10,6 @@ const port = 5000;
 const cors = require("cors");
 app.use(cors({origin: "http://localhost:3000"}));
 
-// ✅ Connect to MySQL
 const db = mysql.createConnection({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -25,8 +24,6 @@ db.connect((err) => {
     console.log("Connected to MySQL");
   }
 });
-
-// ✅ Fetch Weather Data Correctly
 
 const fetchWeatherData = async () => {
     try {
@@ -50,7 +47,6 @@ const fetchWeatherData = async () => {
   
         console.log(`✅ API Response for ${name}: ${temperature}°C`);
   
-        // ✅ Insert data into MySQL
         const query = "INSERT INTO weather_data (city, temperature, timestamp) VALUES (?, ?, ?)";
         db.query(query, [name, temperature, timestamp], (err, result) => {
           if (err) {
@@ -65,8 +61,7 @@ const fetchWeatherData = async () => {
     }
   };
 
-// ✅ Schedule Cron Job Every 3 Hours
-cron.schedule("0 * * * *", () => {
+cron.schedule("*/10 * * * *", () => {
   console.log("Fetching weather data...");
   fetchWeatherData();
 });
@@ -75,7 +70,7 @@ app.get("/all", (req, res) => {
   const query = `
     SELECT city, temperature, timestamp 
     FROM weather_data 
-    ORDER BY city, timestamp ASC`;  // ✅ Ensure correct time order
+    ORDER BY city, timestamp ASC`;
     
   db.query(query, (err, results) => {
     if (err) {
@@ -97,12 +92,37 @@ app.get("/all", (req, res) => {
   });
 });
 
-app.get("/:city", (req, res) => {
-  const city = req.params.city;
-  console.log(`🔍 Received request for city: ${city}`);
-  db.query("SELECT * FROM weather_data WHERE city = ? ORDER BY timestamp DESC", [city], (err, results) => {
-    if (err) res.status(500).json({ error: err });
-    else res.json(results);
+app.get("/all", (req, res) => {
+  const query = `
+    SELECT city, temperature, timestamp 
+    FROM weather_data 
+    ORDER BY city, timestamp ASC`;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      res.status(500).json({ error: err });
+    } else {
+      const cityData = {};
+
+      results.forEach((row) => {
+        if (!cityData[row.city]) {
+          cityData[row.city] = { city: row.city, history: [], forecast: [] };
+        }
+
+        const entry = {
+          timestamp: row.timestamp,
+          temperature: row.temperature,
+        };
+
+        if (new Date(row.timestamp) <= new Date()) {
+          cityData[row.city].history.push(entry);  // ✅ Past data
+        } else {
+          cityData[row.city].forecast.push(entry); // ✅ Future forecast data
+        }
+      });
+
+      res.json(Object.values(cityData));
+    }
   });
 });
 
@@ -110,7 +130,5 @@ app.get("/", (req, res) => {
   res.send("Server is working! 🚀");
 });
 
-// ✅ Start Server
 app.listen(port, () => console.log(`Server running on port ${port}`));
-// ✅ Call function once when server starts
 fetchWeatherData();
