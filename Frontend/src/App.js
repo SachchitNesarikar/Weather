@@ -10,10 +10,6 @@ const App = () => {
   const [cities, setCities] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
 
-  useEffect(() => {
-    fetchWeatherData();
-  }, []);
-
   const fetchWeatherData = async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/all`);
@@ -23,6 +19,10 @@ const App = () => {
       console.error("Error fetching weather data:", error);
     }
   };
+
+  useEffect(() => {
+    fetchWeatherData();
+  }, []);
 
   return (
     <div className="container">

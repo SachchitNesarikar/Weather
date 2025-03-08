@@ -2,17 +2,17 @@ import React from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 
 const CityWeather = ({ city }) => {
-  const allData = city.history || [];
+  if (!city) return <p>Loading...</p>;
 
-  const history = allData.filter((entry) => new Date(entry.timestamp) <= new Date());
-  const forecast = allData.filter((entry) => new Date(entry.timestamp) > new Date());
+  const allData = city.history || [];
+  const history = allData.filter((entry) => entry.timestamp && new Date(entry.timestamp) <= new Date());
 
   const graphData = history.map((entry) => ({
-    timestamp: new Date(entry.timestamp).toLocaleTimeString(),
-    temperature: entry.temperature,
+    timestamp: entry.timestamp ? new Date(entry.timestamp).toLocaleTimeString() : "N/A",
+    temperature: entry.temperature || 0,
   }));
 
-  const latestTemperature = history.length > 0 ? history[0].temperature : "N/A";
+  const latestTemperature = history.length > 0 ? history[history.length - 1].temperature : "N/A";
 
   return (
     <div className="city-card">
@@ -26,19 +26,6 @@ const CityWeather = ({ city }) => {
         <CartesianGrid stroke="#ccc" />
         <Line type="monotone" dataKey="temperature" stroke="#ff7300" />
       </LineChart>
-
-      {forecast.length > 0 && (
-        <div className="forecast">
-          <h3>📅 Forecast</h3>
-          <ul>
-            {forecast.map((entry, index) => (
-              <li key={index}>
-                {new Date(entry.timestamp).toLocaleString()} - {entry.temperature}°C
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
     </div>
   );
 };

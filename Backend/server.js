@@ -27,41 +27,40 @@ db.connect((err) => {
 
 const fetchWeatherData = async () => {
     try {
-      const cities = ["London", "New York", "Tokyo", "Sydney", "Pune", "Berlin", "Cairo", "Rio de Janeiro", "Toronto", "Dubai"];
+      const cities = ["London", "New York", "Tokyo", "Sydney", "Pune", "Berlin", "Cairo", "Rio de Janeiro", "Toronto", "Dubai", "Singapore", "Mumbai", "Paris", "Barcelona", "Rome", "Istanbul", "Moscow", "Cape Town", "Los Angeles", "Chicago", "Mexico City", "Buenos Aires", "Lima", "Santiago", "Caracas", "Lagos", "Nairobi", "Cairo", "Riyadh", "Baghdad", "Tehran", "Karachi", "Mumbai", "Kolkata", "Dhaka", "Yangon", "Bangkok", "Hanoi", "Manila", "Jakarta", "Perth", "Melbourne", "Auckland", "Hawaii", "Anchorage", "Vancouver", "San Francisco", "Seattle", "Denver", "Mexico City", "Chicago", "New York", "Toronto", "Havana", "Rio de Janeiro", "Buenos Aires", "Cape Town", "Cairo", "Riyadh", "Moscow", "Istanbul", "Karachi", "Mumbai", "Kolkata", "Dhaka", "Bangkok", "Hanoi", "Manila", "Jakarta", "Perth", "Melbourne", "Auckland", "Hawaii", "Anchorage", "Vancouver", "San Francisco", "Seattle", "Denver", "Mexico City", "Chicago", "New York", "Toronto", "Havana", "Rio de Janeiro", "Buenos Aires", "Cape Town", "Cairo", "Riyadh", "Moscow", "Istanbul", "Karachi", "Mumbai", "Kolkata", "Dhaka", "Bangkok", "Hanoi", "Manila", "Jakarta", "Perth", "Melbourne", "Auckland", "Hawaii", "Anchorage", "Vancouver", "San Francisco", "Seattle", "Denver", "Mexico City", "Chicago", "New York", "Toronto", "Havana", "Rio de Janeiro", "Buenos Aires", "Cape Town", "Cairo", "Riyadh", "Moscow", "Istanbul", "Karachi", "Mumbai", "Kolkata", "Dhaka", "Bangkok", "Hanoi", "Manila", "Jakarta", "Perth", "Melbourne", "Auckland", "Hawaii", "Anchorage", "Vancouver", "San Francisco", "Seattle", "Denver", "Mexico City", "Chicago", "New York", "Toronto", "Havana", "Rio de Janeiro"];
 
       for (const city of cities) {
-        console.log(`🌍 Fetching weather data for ${city}...`);
-  
+        console.log(`Fetching weather data for ${city}...`); 
+
         const response = await axios.get(
           `${process.env.WEATHER_API_URL}?q=${city}&appid=${process.env.WEATHER_API_KEY}&units=metric`
         );
-  
+
         if (!response.data || !response.data.main) {
-          console.error(`❌ No weather data for ${city}`);
+          console.error(`No weather data for ${city}`);
           continue;
         }
-  
-        const name = response.data.name; // City name
-        const temperature = response.data.main.temp; // Temperature
-        const timestamp = new Date(); // Current timestamp
-  
-        console.log(`✅ API Response for ${name}: ${temperature}°C`);
-  
+
+        const name = response.data.name;
+        const temperature = response.data.main.temp;
+        const timestamp = new Date();
+
+        console.log(`API Response for ${name}: ${temperature}°C`);
         const query = "INSERT INTO weather_data (city, temperature, timestamp) VALUES (?, ?, ?)";
         db.query(query, [name, temperature, timestamp], (err, result) => {
           if (err) {
-            console.error("❌ Error inserting data into DB:", err);
+            console.error("Error inserting data into DB:", err);
           } else {
-            console.log(`📌 Inserted into DB: ${name} - ${temperature}°C`);
+              console.log(`Inserted into DB: ${name} - ${temperature}°C`);
           }
         });
       }
     } catch (error) {
-      console.error("❌ Error fetching weather data:", error);
+      console.error("Error fetching weather data:", error);
     }
   };
 
-cron.schedule("*/10 * * * *", () => {
+cron.schedule("0 * * * *", () => {
   console.log("Fetching weather data...");
   fetchWeatherData();
 });
@@ -71,7 +70,7 @@ app.get("/all", (req, res) => {
     SELECT city, temperature, timestamp 
     FROM weather_data 
     ORDER BY city, timestamp ASC`;
-    
+
   db.query(query, (err, results) => {
     if (err) {
       res.status(500).json({ error: err });
@@ -92,37 +91,12 @@ app.get("/all", (req, res) => {
   });
 });
 
-app.get("/all", (req, res) => {
-  const query = `
-    SELECT city, temperature, timestamp 
-    FROM weather_data 
-    ORDER BY city, timestamp ASC`;
-
-  db.query(query, (err, results) => {
-    if (err) {
-      res.status(500).json({ error: err });
-    } else {
-      const cityData = {};
-
-      results.forEach((row) => {
-        if (!cityData[row.city]) {
-          cityData[row.city] = { city: row.city, history: [], forecast: [] };
-        }
-
-        const entry = {
-          timestamp: row.timestamp,
-          temperature: row.temperature,
-        };
-
-        if (new Date(row.timestamp) <= new Date()) {
-          cityData[row.city].history.push(entry);  // ✅ Past data
-        } else {
-          cityData[row.city].forecast.push(entry); // ✅ Future forecast data
-        }
-      });
-
-      res.json(Object.values(cityData));
-    }
+app.get("/:city", (req, res) => {
+  const city = req.params.city;
+  console.log(`Received request for city: ${city}`);
+  db.query("SELECT * FROM weather_data WHERE city = ? ORDER BY timestamp DESC", [city], (err, results) => {
+    if (err) res.status(500).json({ error: err });
+    else res.json(results);
   });
 });
 
