@@ -12,11 +12,17 @@ const App = () => {
 
   const fetchWeatherData = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/all`);
-      console.log("Fetched cities from API:", response.data);
-      setCities(response.data);
+      const weatherResponse = await axios.get(`${API_BASE_URL}/all`);
+      const aqiResponse = await axios.get(`${API_BASE_URL}/aqi`);
+
+      const mergedData = weatherResponse.data.map((city) => ({
+        ...city,
+        aqi: aqiResponse.data[city.city] || "N/A",
+      }));
+
+      setCities(mergedData);
     } catch (error) {
-      console.error("Error fetching weather data:", error);
+      console.error("Error fetching data:", error);
     }
   };
 

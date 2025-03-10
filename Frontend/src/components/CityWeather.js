@@ -18,6 +18,7 @@ const CityWeather = ({ city }) => {
     <div className="city-card">
       <h2>{city.city}</h2>
       <p>🌡️ Current Temperature: {latestTemperature}°C</p>
+      <p>🌫️ AQI Level: {city.aqi}</p>
 
       <LineChart width={300} height={200} data={graphData}>
         <XAxis dataKey="timestamp" />

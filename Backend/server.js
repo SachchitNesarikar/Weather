@@ -25,6 +25,19 @@ db.connect((err) => {
   }
 });
 
+const fetchAQI = async (lat, lon) => {
+  try {
+    const response = await axios.get(process.env.AQI_URL, {
+      params: { lat, lon, appid: process.env.WEATHER_API_KEY },
+    });
+    return response.data.list[0].main.aqi;
+  } 
+  catch (error) {
+    console.error("Error fetching AQI:", error);
+    return null;
+  }
+};
+
 const fetchWeatherData = async () => {
     try {
       const cities = ["London", "New York", "Tokyo", "Sydney", "Pune", "Berlin", "Cairo", "Rio de Janeiro", "Toronto", "Dubai", "Singapore", "Mumbai", "Paris", "Barcelona", "Rome", "Istanbul", "Moscow", "Cape Town", "Los Angeles", "Chicago", "Mexico City", "Buenos Aires", "Lima", "Santiago", "Caracas", "Lagos", "Nairobi", "Cairo", "Riyadh", "Baghdad", "Tehran", "Karachi", "Mumbai", "Kolkata", "Dhaka", "Yangon", "Bangkok", "Hanoi", "Manila", "Jakarta", "Perth", "Melbourne", "Auckland", "Hawaii", "Anchorage", "Vancouver", "San Francisco", "Seattle", "Denver", "Mexico City", "Chicago", "New York", "Toronto", "Havana", "Rio de Janeiro", "Buenos Aires", "Cape Town", "Cairo", "Riyadh", "Moscow", "Istanbul", "Karachi", "Mumbai", "Kolkata", "Dhaka", "Bangkok", "Hanoi", "Manila", "Jakarta", "Perth", "Melbourne", "Auckland", "Hawaii", "Anchorage", "Vancouver", "San Francisco", "Seattle", "Denver", "Mexico City", "Chicago", "New York", "Toronto", "Havana", "Rio de Janeiro", "Buenos Aires", "Cape Town", "Cairo", "Riyadh", "Moscow", "Istanbul", "Karachi", "Mumbai", "Kolkata", "Dhaka", "Bangkok", "Hanoi", "Manila", "Jakarta", "Perth", "Melbourne", "Auckland", "Hawaii", "Anchorage", "Vancouver", "San Francisco", "Seattle", "Denver", "Mexico City", "Chicago", "New York", "Toronto", "Havana", "Rio de Janeiro", "Buenos Aires", "Cape Town", "Cairo", "Riyadh", "Moscow", "Istanbul", "Karachi", "Mumbai", "Kolkata", "Dhaka", "Bangkok", "Hanoi", "Manila", "Jakarta", "Perth", "Melbourne", "Auckland", "Hawaii", "Anchorage", "Vancouver", "San Francisco", "Seattle", "Denver", "Mexico City", "Chicago", "New York", "Toronto", "Havana", "Rio de Janeiro"];
@@ -44,10 +57,11 @@ const fetchWeatherData = async () => {
         const name = response.data.name;
         const temperature = response.data.main.temp;
         const timestamp = new Date();
+        const aqi = await fetchAQI(response.data.coord.lat, response.data.coord.lon);
 
         console.log(`API Response for ${name}: ${temperature}°C`);
-        const query = "INSERT INTO weather_data (city, temperature, timestamp) VALUES (?, ?, ?)";
-        db.query(query, [name, temperature, timestamp], (err, result) => {
+        const query = "INSERT INTO weather_data (city, temperature, timestamp, aqi) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE temperature = VALUES(temperature), timestamp = VALUES(timestamp), aqi = VALUES(aqi)";
+        db.query(query, [name, temperature, timestamp, aqi], (err, result) => {
           if (err) {
             console.error("Error inserting data into DB:", err);
           } else {
@@ -91,12 +105,30 @@ app.get("/all", (req, res) => {
   });
 });
 
-app.get("/:city", (req, res) => {
+app.get("/city", (req, res) => {
   const city = req.params.city;
   console.log(`Received request for city: ${city}`);
   db.query("SELECT * FROM weather_data WHERE city = ? ORDER BY timestamp DESC", [city], (err, results) => {
     if (err) res.status(500).json({ error: err });
     else res.json(results);
+  });
+});
+
+app.get("/aqi", (req, res) => {
+  const query = "SELECT city, aqi FROM weather_data";
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Error fetching AQI:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+
+    const aqiData = {};
+    results.forEach((row) => {
+      aqiData[row.city] = row.aqi;
+    });
+
+    res.json(aqiData);
   });
 });
 
@@ -106,3 +138,4 @@ app.get("/", (req, res) => {
 
 app.listen(port, () => console.log(`Server running on port ${port}`));
 fetchWeatherData();
+fetchAQI();
