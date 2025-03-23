@@ -74,7 +74,7 @@ const fetchWeatherData = async () => {
     }
   };
 
-cron.schedule("0 * * * *", () => {
+cron.schedule("*/5 * * * *", () => {
   console.log("Fetching weather data...");
   fetchWeatherData();
 });

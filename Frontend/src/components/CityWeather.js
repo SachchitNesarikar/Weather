@@ -1,14 +1,28 @@
 import React from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 
+const getAQIDescription = (aqi) => {
+  const aqiMap = {
+    1: "Very Good",
+    2: "Good",
+    3: "Moderate",
+    4: "Poor",
+    5: "Very Poor",
+  };
+  return aqiMap[aqi] || "Unknown";
+};
+
 const CityWeather = ({ city }) => {
   if (!city) return <p>Loading...</p>;
 
-  const allData = city.history || [];
-  const history = allData.filter((entry) => entry.timestamp && new Date(entry.timestamp) <= new Date());
+  const history = (city.history || []).filter(
+    (entry) => entry.timestamp && new Date(entry.timestamp) <= new Date()
+  );
 
   const graphData = history.map((entry) => ({
-    timestamp: entry.timestamp ? new Date(entry.timestamp).toLocaleTimeString() : "N/A",
+    timestamp: entry.timestamp
+      ? new Date(entry.timestamp).toLocaleString([], { hour: "2-digit", minute: "2-digit" })
+      : "N/A",
     temperature: entry.temperature || 0,
   }));
 
@@ -18,7 +32,7 @@ const CityWeather = ({ city }) => {
     <div className="city-card">
       <h2>{city.city}</h2>
       <p>🌡️ Current Temperature: {latestTemperature}°C</p>
-      <p>🌫️ AQI Level: {city.aqi}</p>
+      <p>🌫️ {getAQIDescription(city.aqi)} air quality</p>
 
       <LineChart width={300} height={200} data={graphData}>
         <XAxis dataKey="timestamp" />
